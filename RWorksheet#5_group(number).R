@@ -60,7 +60,7 @@ rank_title <- data.frame(
 rank_title<-rank_title[,-3]
 colnames(rank_title)<-c("Rank","Title")
 write.csv(rank_title,file = "title.csv")
-
+rank_title
 #------------------------------------------------------------
 
 
@@ -111,3 +111,44 @@ ratings
 
 next2<-cbind(rank_title,ratings)
 next2
+#---------------------------------------------------------------------
+
+
+year<- character(0)
+
+# scraping in polite way using the h3 element
+year_list <- scrape(session) %>%
+  html_nodes('div.sc-43986a27-7') %>% 
+  html_text
+
+# Extracting titles and simple data cleaning process
+# we will use the title_list 
+class(year_list)
+
+year_list_sub <- as.data.frame(year_list[1:50])
+
+head(year_list_sub)
+tail(year_list_sub)
+#changing column names to ranks
+colnames(year_list_sub) <- "ratings"
+#split the string(rank and title)
+split_df <- gsub("(.{4})", "\\1,", as.character(year_list_sub$ratings), perl=TRUE)
+split_df <- data.frame(do.call(rbind, strsplit(split_df, ",")))
+
+split_df
+
+#rename and delete columns
+# deleting columns 3 and 4 since it duplicated the columns
+split_df <- split_df[-c(2:6)] 
+
+#renaming column 1 and 2
+colnames(split_df) <- c("Year") 
+
+# structure of splif_df
+str(split_df) 
+class(split_df)
+head(split_df)
+
+split_df
+next3<-cbind(next2,split_df)
+next3
