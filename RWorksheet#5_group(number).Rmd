@@ -34,7 +34,7 @@ url <- 'https://www.imdb.com/chart/toptv/?ref_=nv_tvv_250'
 # asking permission to scrape
 session <- bow(url,
                user_agent = "Educational")
-session
+
 
 #creating objects for the dataset
 rank_title <- character(0)
@@ -46,7 +46,6 @@ title_list <- scrape(session) %>%
 
 # Extracting titles and simple data cleaning process
 # we will use the title_list 
-class(title_list)
 
 title_list_sub <- as.data.frame(title_list[2:51])
 
@@ -80,12 +79,10 @@ rate_list <- scrape(session) %>%
 
 # Extracting titles and simple data cleaning process
 # we will use the title_list 
-class(rate_list)
 
 rate_list_sub <- as.data.frame(rate_list[2:51])
 
-head(rate_list_sub)
-tail(rate_list_sub)
+
 #changing column names to ranks
 colnames(rate_list_sub) <- "ratings"
 
@@ -100,21 +97,17 @@ split_df <- split_df[-c(3:4)]
 #renaming column 1 and 2
 colnames(split_df) <- c("Ratings","Number of Votes") 
 
-# structure of splif_df
-str(split_df) 
-class(split_df)
-head(split_df)
 split_dq <- strsplit(as.character(split_df$`Number of Votes`), ")",fixed = TRUE)
 split_df<-split_df[,-2]
 split_df<-rbind(split_df,split_dq)
 
 split_df<-t(split_df)
-split_df
+
 
 ratings <- data.frame(
   ratings = split_df)
 colnames(ratings)<-c("Ratings","Number of Votes")
-ratings
+
 
 next2<-cbind(rank_title,ratings)
 
@@ -130,15 +123,12 @@ year_list <- scrape(session) %>%
   html_nodes('div.sc-43986a27-7') %>% 
   html_text
 
-# Extracting titles and simple data cleaning process
-# we will use the title_list 
-class(year_list)
 
 year_list_sub <- as.data.frame(year_list[1:50])
 
 
 colnames(year_list_sub) <- "ratings"
-#split the string(rank and title)
+
 split_df <- gsub("(.{4})", "\\1,", as.character(year_list_sub$ratings), perl=TRUE)
 split_df <- data.frame(do.call(rbind, strsplit(split_df, ",")))
 
@@ -151,13 +141,9 @@ split_df <- split_df[-c(2:6)]
 #renaming column 1 and 2
 colnames(split_df) <- c("Year") 
 
-# structure of splif_df
-str(split_df) 
-class(split_df)
-head(split_df)
-
 next3<-cbind(next2,split_df)
 next3
+
 ```
 
 ## 2. From the 50 tv shows, select at least 5 tv shows to scrape the user reviews that will include the reviewer's name, date of reviewed, user rating, title of the review, and text reviews.
@@ -802,3 +788,16 @@ write.csv(part5,file="num3_attackontitan.csv")
 
 ```
 
+## 3. Create a time series graph for the tv shows released by year. Which year has the most number of tv shows released?
+```{r}
+# Sample dataset
+tv_shows <- data.frame(
+  show_name= c(next3$Title),
+  release_year = c(next3$Year)
+)
+
+# Create a time series plot
+plot(table(tv_shows$release_year), type = "b", xlab = "Year", ylab = "Number of TV Shows", main = "TV Shows Released by Year")
+
+
+```
