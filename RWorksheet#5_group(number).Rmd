@@ -1,0 +1,804 @@
+---
+title: "RWorksheet#5_group(number)"
+author: "Zydrick Ceniza, Aira Mia Lego, Kyla Ysabelle Dela Cruz, Kent Hervey Gener, Darlene Lapso, Lore Faith Sabio"
+date: "2023-12-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Worksheet-5a in R
+
+## 1. Each group needs to extract the top 50 tv shows in Imdb.com. It will include the rank, the title of the tv show, tv rating, the number of people who voted, the number of episodes, the year it was released.
+
+```{r}
+library(rvest)
+library(httr)
+library(dplyr) # use of pipeline %>%
+library(polite)
+
+#install.packages("kableExtra")
+#kableExtra package is to create tables using the kable() function 
+
+library(kableExtra)
+
+
+
+polite::use_manners(save_as = 'polite_scrape.R')
+
+#Specifying the url for desired website to be scraped
+url <- 'https://www.imdb.com/chart/toptv/?ref_=nv_tvv_250'
+
+# asking permission to scrape
+session <- bow(url,
+               user_agent = "Educational")
+session
+
+#creating objects for the dataset
+rank_title <- character(0)
+
+# scraping in polite way using the h3 element
+title_list <- scrape(session) %>%
+  html_nodes('h3.ipc-title__text') %>% 
+  html_text
+
+# Extracting titles and simple data cleaning process
+# we will use the title_list 
+class(title_list)
+
+title_list_sub <- as.data.frame(title_list[2:51])
+
+colnames(title_list_sub) <- "ranks"
+
+#split the string(rank and title)
+split_df <- strsplit(as.character(title_list_sub$ranks),".",fixed = TRUE)
+split_df <- data.frame(do.call(rbind,split_df))
+
+#rename and delete columns
+# deleting columns 3 and 4 since it duplicated the columns
+split_df <- split_df[-c(3:4)] 
+
+#renaming column 1 and 2
+colnames(split_df) <- c("ranks","title") 
+
+rank_title <- data.frame(
+  rank_title = split_df)
+rank_title<-rank_title[,-3]
+colnames(rank_title)<-c("Rank","Title")
+
+#------------------------------------------------------------
+
+
+rate<- character(0)
+
+# scraping in polite way using the h3 element
+rate_list <- scrape(session) %>%
+  html_nodes('span.ipc-rating-star--imdb') %>% 
+  html_text
+
+# Extracting titles and simple data cleaning process
+# we will use the title_list 
+class(rate_list)
+
+rate_list_sub <- as.data.frame(rate_list[2:51])
+
+head(rate_list_sub)
+tail(rate_list_sub)
+#changing column names to ranks
+colnames(rate_list_sub) <- "ratings"
+
+#split the string(rank and title)
+split_df <- strsplit(as.character(rate_list_sub$ratings), "(",fixed = TRUE)
+split_df <- data.frame(do.call(rbind,split_df))
+
+#rename and delete columns
+# deleting columns 3 and 4 since it duplicated the columns
+split_df <- split_df[-c(3:4)] 
+
+#renaming column 1 and 2
+colnames(split_df) <- c("Ratings","Number of Votes") 
+
+# structure of splif_df
+str(split_df) 
+class(split_df)
+head(split_df)
+split_dq <- strsplit(as.character(split_df$`Number of Votes`), ")",fixed = TRUE)
+split_df<-split_df[,-2]
+split_df<-rbind(split_df,split_dq)
+
+split_df<-t(split_df)
+split_df
+
+ratings <- data.frame(
+  ratings = split_df)
+colnames(ratings)<-c("Ratings","Number of Votes")
+ratings
+
+next2<-cbind(rank_title,ratings)
+
+
+
+#---------------------------------------------------------------------
+  
+
+  year<- character(0)
+
+# scraping in polite way using the h3 element
+year_list <- scrape(session) %>%
+  html_nodes('div.sc-43986a27-7') %>% 
+  html_text
+
+# Extracting titles and simple data cleaning process
+# we will use the title_list 
+class(year_list)
+
+year_list_sub <- as.data.frame(year_list[1:50])
+
+
+colnames(year_list_sub) <- "ratings"
+#split the string(rank and title)
+split_df <- gsub("(.{4})", "\\1,", as.character(year_list_sub$ratings), perl=TRUE)
+split_df <- data.frame(do.call(rbind, strsplit(split_df, ",")))
+
+
+
+#rename and delete columns
+# deleting columns 3 and 4 since it duplicated the columns
+split_df <- split_df[-c(2:6)] 
+
+#renaming column 1 and 2
+colnames(split_df) <- c("Year") 
+
+# structure of splif_df
+str(split_df) 
+class(split_df)
+head(split_df)
+
+next3<-cbind(next2,split_df)
+next3
+```
+
+## 2. From the 50 tv shows, select at least 5 tv shows to scrape the user reviews that will include the reviewer's name, date of reviewed, user rating, title of the review, and text reviews.
+
+### 1st
+
+```{r}
+library(rvest)
+library(httr)
+library(dplyr) # use of pipeline %>%
+library(polite)
+
+#install.packages("kableExtra")
+#kableExtra package is to create tables using the kable() function 
+
+library(kableExtra)
+
+
+
+polite::use_manners(save_as = 'polite_scrape.R')
+
+#Specifying the url for desired website to be scraped
+url <- 'https://www.imdb.com/title/tt0903747/reviews/?ref_=tt_ov_rt'
+
+# asking permission to scrape
+session <- bow(url,
+               user_agent = "Educational")
+session
+
+#creating objects for the dataset
+name <- character(0)
+
+# scraping in polite way using the h3 element
+title_list <- scrape(session) %>%
+  html_nodes('span.display-name-link') %>% 
+  html_text
+
+
+
+title_list_sub <- as.data.frame(title_list[1:25])
+
+
+name<- title_list_sub
+colnames(name)<-c("Name")
+
+#---------------------------------------------------------------------------
+
+date <- character(0)
+
+# scraping in polite way using the h3 element
+date_list <- scrape(session) %>%
+  html_nodes('span.review-date') %>% 
+  html_text
+
+
+date_list_sub <- as.data.frame(date_list[1:25])
+
+
+
+
+#rename and delete columns
+# deleting columns 3 and 4 since it duplicated the columns
+
+
+date<- date_list_sub
+colnames(date)<-c("Date")
+
+
+part2<-cbind(name,date)
+
+#---------------------------------------------------------------------------
+
+
+rating <- character(0)
+
+# scraping in polite way using the h3 element
+rate_list <- scrape(session) %>%
+  html_nodes('span.rating-other-user-rating') %>% 
+  html_text
+
+
+
+rate_list_sub <- as.data.frame(rate_list[1:25])
+
+colnames(rate_list_sub) <- "ranks"
+
+#split the string(rank and title)
+split_df <- strsplit((rate_list_sub$ranks),"\n",fixed = TRUE)
+split_df <- data.frame(do.call(rbind,split_df))
+
+
+
+rating<- data.frame(
+  rating= split_df)
+
+Rating<-rating[,2]
+
+part3<-cbind(part2,Rating)
+
+#---------------------------------------------------------------------------
+title <- character(0)
+
+# scraping in polite way using the h3 element
+titles_list <- scrape(session) %>%
+  html_nodes('a.title') %>% 
+  html_text
+
+
+
+titles_list_sub <- as.data.frame(titles_list[1:25])
+
+
+colnames(titles_list_sub) <- "ranks"
+
+#split the string(rank and title)
+split_df <- strsplit((titles_list_sub$ranks),"\n",fixed = TRUE)
+split_df <- data.frame(do.call(rbind,split_df))
+
+#rename and delete columns
+# deleting columns 3 and 4 since it duplicated the columns
+
+
+#renaming column 1 and 2
+
+
+
+title<- data.frame(
+  title= split_df)
+
+colnames(title)<-c("Title of Review")
+
+part4<-cbind(part3,title)
+
+
+#---------------------------------------------------------------------------
+
+
+text <- character(0)
+
+# scraping in polite way using the h3 element
+text_list <- scrape(session) %>%
+  html_nodes('div.text.show-more__control') %>% 
+  html_text
+
+
+
+text_list_sub <- as.data.frame(text_list[1:25])
+
+
+
+colnames(text_list_sub)<-c("Text Reviews")
+
+
+part5<-cbind(part4,text_list_sub)
+part5
+
+write.csv(part5,file="num2_1st_breaking_bad.csv")
+```
+
+### 2nd
+
+```{r}
+library(rvest)
+library(httr)
+library(dplyr)
+library(polite)
+
+library(kableExtra)
+
+
+
+polite::use_manners(save_as = 'polite_scrape.R')
+
+
+url <- 'https://www.imdb.com/title/tt5491994/reviews/?ref_=tt_ov_rt'
+
+# asking permission to scrape
+session <- bow(url,
+               user_agent = "Educational")
+
+
+name <- character(0)
+
+title_list <- scrape(session) %>%
+  html_nodes('span.display-name-link') %>% 
+  html_text
+
+
+title_list_sub <- as.data.frame(title_list[1:25])
+
+
+name<- title_list_sub
+colnames(name)<-c("Name")
+
+
+#---------------------------------------------------------------------------
+
+date <- character(0)
+
+
+date_list <- scrape(session) %>%
+  html_nodes('span.review-date') %>% 
+  html_text
+
+date_list_sub <- as.data.frame(date_list[1:25])
+
+
+date<- date_list_sub
+colnames(date)<-c("Date")
+
+
+part2<-cbind(name,date)
+
+#---------------------------------------------------------------------------
+
+
+rating <- character(0)
+
+rate_list <- scrape(session) %>%
+  html_nodes('span.rating-other-user-rating') %>% 
+  html_text
+
+
+rate_list_sub <- as.data.frame(rate_list[1:25])
+
+colnames(rate_list_sub) <- "ranks"
+
+split_df <- strsplit((rate_list_sub$ranks),"\n",fixed = TRUE)
+split_df <- data.frame(do.call(rbind,split_df))
+
+rating<- data.frame(
+  rating= split_df)
+
+Rating<-rating[,2]
+
+part3<-cbind(part2,Rating)
+
+#---------------------------------------------------------------------------
+title <- character(0)
+
+titles_list <- scrape(session) %>%
+  html_nodes('a.title') %>% 
+  html_text
+
+
+titles_list_sub <- as.data.frame(titles_list[1:25])
+
+colnames(titles_list_sub) <- "ranks"
+
+split_df <- strsplit((titles_list_sub$ranks),"\n",fixed = TRUE)
+split_df <- data.frame(do.call(rbind,split_df))
+
+title<- data.frame(
+  title= split_df)
+colnames(title)<-c("Title of Review")
+part4<-cbind(part3,title)
+
+
+#---------------------------------------------------------------------------
+
+
+text <- character(0)
+
+text_list <- scrape(session) %>%
+  html_nodes('div.text.show-more__control') %>% 
+  html_text
+
+
+text_list_sub <- as.data.frame(text_list[1:25])
+
+colnames(text_list_sub)<-c("Text Reviews")
+
+
+part5<-cbind(part4,text_list_sub)
+write.csv(part5,file="num2_2nd_planet_earth_II.csv")
+part5
+
+
+
+```
+
+### 3rd
+```{r}
+library(rvest)
+library(httr)
+library(dplyr) 
+library(polite)
+
+library(kableExtra)
+
+
+
+polite::use_manners(save_as = 'polite_scrape.R')
+
+url <- 'https://www.imdb.com/title/tt0417299/reviews/?ref_=tt_ov_rt'
+
+
+session <- bow(url,
+               user_agent = "Educational")
+
+
+
+name <- character(0)
+
+
+title_list <- scrape(session) %>%
+  html_nodes('span.display-name-link') %>% 
+  html_text
+
+
+title_list_sub <- as.data.frame(title_list[1:25])
+
+
+name<- title_list_sub
+colnames(name)<-c("Name")
+
+
+#---------------------------------------------------------------------------
+
+date <- character(0)
+
+date_list <- scrape(session) %>%
+  html_nodes('span.review-date') %>% 
+  html_text
+
+date_list_sub <- as.data.frame(date_list[1:25])
+
+date<- date_list_sub
+colnames(date)<-c("Date")
+
+
+part2<-cbind(name,date)
+
+#---------------------------------------------------------------------------
+
+
+rating <- character(0)
+
+
+rate_list <- scrape(session) %>%
+  html_nodes('span.rating-other-user-rating') %>% 
+  html_text
+
+rate_list_sub <- as.data.frame(rate_list[1:25])
+
+colnames(rate_list_sub) <- "ranks"
+
+
+split_df <- strsplit((rate_list_sub$ranks),"\n",fixed = TRUE)
+split_df <- data.frame(do.call(rbind,split_df))
+
+rating<- data.frame(
+  rating= split_df)
+
+Rating<-rating[,2]
+
+
+part3<-cbind(part2,Rating)
+
+#---------------------------------------------------------------------------
+title <- character(0)
+
+
+titles_list <- scrape(session) %>%
+  html_nodes('a.title') %>% 
+  html_text
+
+titles_list_sub <- as.data.frame(titles_list[1:25])
+
+colnames(titles_list_sub) <- "ranks"
+
+split_df <- strsplit((titles_list_sub$ranks),"\n",fixed = TRUE)
+split_df <- data.frame(do.call(rbind,split_df))
+
+
+title<- data.frame(
+  title= split_df)
+
+colnames(title)<-c("Title of Review")
+
+part4<-cbind(part3,title)
+
+
+#---------------------------------------------------------------------------
+
+
+text <- character(0)
+
+
+text_list <- scrape(session) %>%
+  html_nodes('div.text.show-more__control') %>% 
+  html_text
+
+text_list_sub <- as.data.frame(text_list[1:25])
+
+colnames(text_list_sub)<-c("Text Reviews")
+
+
+part5<-cbind(part4,text_list_sub)
+part5
+write.csv(part5,file="num2_3rd_avatar_reviews.csv")
+
+
+
+```
+
+### 4th
+```{r}
+library(rvest)
+library(httr)
+library(dplyr)
+library(polite)
+
+library(kableExtra)
+
+
+
+polite::use_manners(save_as = 'polite_scrape.R')
+
+url <- 'https://www.imdb.com/title/tt2861424/reviews/?ref_=tt_ql_2'
+
+
+session <- bow(url,
+               user_agent = "Educational")
+
+name <- character(0)
+
+
+title_list <- scrape(session) %>%
+  html_nodes('span.display-name-link') %>% 
+  html_text
+
+title_list_sub <- as.data.frame(title_list[1:25])
+
+
+name<- title_list_sub
+colnames(name)<-c("Name")
+
+
+#---------------------------------------------------------------------------
+
+date <- character(0)
+
+
+date_list <- scrape(session) %>%
+  html_nodes('span.review-date') %>% 
+  html_text
+
+
+date_list_sub <- as.data.frame(date_list[1:25])
+
+date<- date_list_sub
+colnames(date)<-c("Date")
+
+part2<-cbind(name,date)
+
+#---------------------------------------------------------------------------
+
+
+rating <- character(0)
+
+rate_list <- scrape(session) %>%
+  html_nodes('span.rating-other-user-rating') %>% 
+  html_text
+
+rate_list_sub <- as.data.frame(rate_list[1:25])
+
+colnames(rate_list_sub) <- "ranks"
+
+split_df <- strsplit((rate_list_sub$ranks),"\n",fixed = TRUE)
+split_df <- data.frame(do.call(rbind,split_df))
+
+rating<- data.frame(
+  rating= split_df)
+
+Rating<-rating[,2]
+
+part3<-cbind(part2,Rating)
+#---------------------------------------------------------------------------
+title <- character(0)
+
+titles_list <- scrape(session) %>%
+  html_nodes('a.title') %>% 
+  html_text
+
+titles_list_sub <- as.data.frame(titles_list[1:25])
+
+colnames(titles_list_sub) <- "ranks"
+
+split_df <- strsplit((titles_list_sub$ranks),"\n",fixed = TRUE)
+split_df <- data.frame(do.call(rbind,split_df))
+
+
+title<- data.frame(
+  title= split_df)
+colnames(title)<-c("Title of Review")
+part4<-cbind(part3,title)
+
+
+#---------------------------------------------------------------------------
+
+
+text <- character(0)
+
+text_list <- scrape(session) %>%
+  html_nodes('div.text.show-more__control') %>% 
+  html_text
+
+text_list_sub <- as.data.frame(text_list[1:25])
+
+colnames(text_list_sub)<-c("Text Reviews")
+
+
+part5<-cbind(part4,text_list_sub)
+as.data.frame(part5)
+
+write.csv(part5,file="num2_4th_rick&morty.csv")
+
+
+
+```
+
+### 5th
+```{r}
+library(rvest)
+library(httr)
+library(dplyr) 
+library(polite)
+
+library(kableExtra)
+
+
+
+polite::use_manners(save_as = 'polite_scrape.R')
+
+
+url <- 'https://www.imdb.com/title/tt2560140/reviews/?ref_=tt_ql_2'
+
+
+session <- bow(url,
+               user_agent = "Educational")
+
+
+name <- character(0)
+
+title_list <- scrape(session) %>%
+  html_nodes('span.display-name-link') %>% 
+  html_text
+title_list_sub <- as.data.frame(title_list[1:25])
+
+
+name<- title_list_sub
+colnames(name)<-c("Name")
+name
+
+#---------------------------------------------------------------------------
+
+date <- character(0)
+
+
+date_list <- scrape(session) %>%
+  html_nodes('span.review-date') %>% 
+  html_text
+
+
+date_list_sub <- as.data.frame(date_list[1:25])
+
+
+date<- date_list_sub
+colnames(date)<-c("Date")
+
+
+part2<-cbind(name,date)
+
+#---------------------------------------------------------------------------
+
+
+rating <- character(0)
+
+
+rate_list <- scrape(session) %>%
+  html_nodes('span.rating-other-user-rating') %>% 
+  html_text
+
+rate_list_sub <- as.data.frame(rate_list[1:25])
+
+colnames(rate_list_sub) <- "ranks"
+
+
+split_df <- strsplit((rate_list_sub$ranks),"\n",fixed = TRUE)
+split_df <- data.frame(do.call(rbind,split_df))
+
+rating<- data.frame(
+  rating= split_df)
+
+Rating<-rating[,2]
+
+
+part3<-cbind(part2,Rating)
+
+#---------------------------------------------------------------------------
+title <- character(0)
+
+
+titles_list <- scrape(session) %>%
+  html_nodes('a.title') %>% 
+  html_text
+
+titles_list_sub <- as.data.frame(titles_list[1:25])
+colnames(titles_list_sub) <- "ranks"
+
+
+split_df <- strsplit((titles_list_sub$ranks),"\n",fixed = TRUE)
+split_df <- data.frame(do.call(rbind,split_df))
+
+title<- data.frame(
+  title= split_df)
+
+colnames(title)<-c("Title of Review")
+
+part4<-cbind(part3,title)
+
+save(part4,file="p4.csv")
+#---------------------------------------------------------------------------
+
+
+text <- character(0)
+
+text_list <- scrape(session) %>%
+  html_nodes('div.text.show-more__control') %>% 
+  html_text
+
+text_list_sub <- as.data.frame(text_list[1:25])
+
+colnames(text_list_sub)<-c("Text Reviews")
+
+
+part5<-cbind(part4,text_list_sub)
+write.csv(part5,file="num3_attackontitan.csv")
+
+
+
+```
+
